@@ -1,0 +1,109 @@
+.container { 
+    max-width: 800px; 
+    margin: 0 auto; 
+    padding: 20px; 
+}
+
+.section { 
+    margin-bottom: 30px; 
+    border: 1px solid #ccc; 
+    padding: 20px; 
+}
+
+.qr-container { 
+    display: flex; 
+    gap: 10px; 
+    margin: 20px 0; 
+}
+
+canvas { 
+    border: 1px solid #ccc; 
+}
+
+input[type="file"] { 
+    margin: 10px 0; 
+}
+
+button { 
+    padding: 10px 20px; 
+    background: #007bff; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+}
+
+button:hover { 
+    background: #0056b3; 
+}
+
+/* Tabs */
+.tab-container {
+    width: 100%;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: #f4f4f4;
+    color: #333;
+    border: none;
+    border-radius: 5px 5px 0 0;
+    margin-right: 5px;
+}
+
+.tab-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Reader input methods */
+.input-methods {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.method-btn {
+    padding: 8px 15px;
+    font-size: 14px;
+    background: #f4f4f4;
+    color: #333;
+}
+
+.method-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.input-method {
+    display: none;
+    margin-bottom: 20px;
+}
+
+.input-method.active {
+    display: block;
+}
+
+/* Webcam */
+#webcamContainer {
+    margin: 15px 0;
+    position: relative;
+}
+
+#webcamVideo {
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #ccc;
+}

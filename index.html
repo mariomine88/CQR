@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CQR Generator & Reader</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="generator">Generate CQR</button>
+                <button class="tab-btn" data-tab="reader">Read CQR</button>
+            </div>
+            
+            <!-- Generator Tab -->
+            <div class="tab-content active" id="generator">
+                <div class="section">
+                    <h2>Generate CQR</h2>
+                    <input type="text" id="inputData" placeholder="Enter data to encode" style="width: 300px; padding: 5px;">
+                    <button id="generateBtn">Generate CQR</button>
+                    <button id="downloadBtn" disabled>Download QR</button>
+                    <div class="qr-container">
+                        <canvas id="combinedCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reader Tab -->
+            <div class="tab-content" id="reader">
+                <div class="section">
+                    <h2>Read CQR</h2>
+                    <div class="input-methods">
+                        <button class="method-btn active" data-method="file">Upload File</button>
+                        <button class="method-btn" data-method="webcam">Use Webcam</button>
+                    </div>
+                    
+                    <div class="input-method active" id="file-input">
+                        <input type="file" id="cqrInput" accept="image/*">
+                        <button id="decodeFileBtn">Decode CQR</button>
+                    </div>
+                    
+                    <div class="input-method" id="webcam-input">
+                        <div id="webcamContainer">
+                            <video id="webcamVideo" playsinline autoplay></video>
+                            <canvas id="webcamCanvas" style="display: none;"></canvas>
+                        </div>
+                        <button id="startWebcamBtn">Start Webcam</button>
+                        <button id="captureBtn" disabled>Capture & Decode</button>
+                    </div>
+                    
+                    <div id="decodedResult" style="margin-top: 10px;"></div>
+                    <div id="channelDebugContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/generator.js"></script>
+    <script src="js/reader.js"></script>
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(button.getAttribute('data-tab')).classList.add('active');
+            });
+        });
+        
+        // Method switching in reader tab
+        document.querySelectorAll('.method-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.input-method').forEach(method => method.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(button.getAttribute('data-method') + '-input').classList.add('active');
+                
+                // Stop webcam if switching away from webcam
+                if (button.getAttribute('data-method') !== 'webcam') {
+                    stopWebcam();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
