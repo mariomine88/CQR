@@ -1,191 +1,144 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const inputData = document.getElementById('inputData');
-    const generateBtn = document.getElementById('generateBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const combinedCanvas = document.getElementById('combinedCanvas');
-    const ctx = combinedCanvas.getContext('2d');
-
-    // Set up canvas dimensions - QR codes are usually square
-    const canvasSize = 300;
-    combinedCanvas.width = canvasSize;
-    combinedCanvas.height = canvasSize;
-
-    // Create containers for individual channel canvases
+    // DOM elements
+    const elements = {
+        inputData: document.getElementById('inputData'),
+        generateBtn: document.getElementById('generateBtn'),
+        downloadBtn: document.getElementById('downloadBtn'),
+        combinedCanvas: document.getElementById('combinedCanvas')
+    };
+    
+    // Set up canvas
+    const canvasSize = CONFIG.CANVAS.DEFAULT_SIZE;
+    elements.combinedCanvas.width = canvasSize;
+    elements.combinedCanvas.height = canvasSize;
+    const ctx = elements.combinedCanvas.getContext('2d');
+    
+    // Create container for QR display
+    const qrDisplayContainer = document.createElement('div');
+    qrDisplayContainer.className = 'qr-display-container';
+    qrDisplayContainer.style.display = 'flex';
+    qrDisplayContainer.style.alignItems = 'flex-start';
+    qrDisplayContainer.style.gap = '20px';
+    
+    // Move canvas into container
+    elements.combinedCanvas.parentNode.insertBefore(qrDisplayContainer, elements.combinedCanvas);
+    qrDisplayContainer.appendChild(elements.combinedCanvas);
+    
+    // Create channel container
     const channelContainer = document.createElement('div');
     channelContainer.className = 'channel-container';
-    channelContainer.style.display = 'flex';
-    channelContainer.style.justifyContent = 'space-between';
-    channelContainer.style.marginTop = '20px';
-    
-    // Create individual canvases for each channel
-    const redCanvas = document.createElement('canvas');
-    const greenCanvas = document.createElement('canvas');
-    const blueCanvas = document.createElement('canvas');
-    
-    [redCanvas, greenCanvas, blueCanvas].forEach((canvas, index) => {
-        canvas.width = canvasSize / 2;
-        canvas.height = canvasSize / 2;
-        
-        const label = document.createElement('div');
-        const channels = ['Red Channel', 'Green Channel', 'Blue Channel'];
-        label.textContent = channels[index];
-        label.style.textAlign = 'center';
-        
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'inline-block';
-        wrapper.style.margin = '0 5px';
-        
-        wrapper.appendChild(canvas);
-        wrapper.appendChild(label);
-        channelContainer.appendChild(wrapper);
-    });
-    
-    // Insert the channel container after the combined canvas
-    combinedCanvas.parentNode.appendChild(channelContainer);
-
-    // Hide channel displays initially
     channelContainer.style.display = 'none';
-
-    generateBtn.addEventListener('click', generateColorQR);
-    downloadBtn.addEventListener('click', downloadQR);
-
+    channelContainer.style.flexDirection = 'column';
+    channelContainer.style.gap = '10px';
+    qrDisplayContainer.appendChild(channelContainer);
+    
+    // Create individual channel canvases
+    const smallCanvasSize = canvasSize / CONFIG.CANVAS.CHANNEL_SCALE_FACTOR;
+    const channelCanvases = CONFIG.CHANNELS.map(channel => 
+        createChannelCanvas(channelContainer, channel.name, smallCanvasSize, smallCanvasSize)
+    );
+    
+    // Event listeners
+    elements.generateBtn.addEventListener('click', generateColorQR);
+    elements.downloadBtn.addEventListener('click', downloadQR);
+    
     async function generateColorQR() {
-        const data = inputData.value.trim();
+        const data = elements.inputData.value.trim();
         if (!data) {
-            alert('Please enter data to encode');
+            showMessage('Please enter data to encode');
             return;
         }
 
         // Clear previous QR code
         ctx.clearRect(0, 0, canvasSize, canvasSize);
-
+        
         try {
-            // Divide data into three approximately equal parts
-            const dataLength = data.length;
-            const partSize = Math.ceil(dataLength / 3);
+            // Split data into parts for each channel
+            const [part1, part2, part3] = splitDataForChannels(data);
             
-            const part1 = data.substring(0, partSize);
-            const part2 = data.substring(partSize, partSize * 2);
-            const part3 = data.substring(partSize * 2);
-
-            // Generate three separate QR codes - one for each channel
-            const redQR = await generateQRCode(part1);
-            const greenQR = await generateQRCode(part2);
-            const blueQR = await generateQRCode(part3);
-
-            // Combine the three QR codes into color channels
+            // Generate QR codes for each channel
+            const qrPromises = [part1, part2, part3].map(part => 
+                generateQRCode(part, canvasSize)
+            );
+            
+            const [redQR, greenQR, blueQR] = await Promise.all(qrPromises);
+            
+            // Combine QR codes into color channels
             combineQRCodes(redQR, greenQR, blueQR);
             
-            // Display individual channels
-            displaySingleChannel(redQR, redCanvas, [255, 0, 0]);
-            displaySingleChannel(greenQR, greenCanvas, [0, 255, 0]);
-            displaySingleChannel(blueQR, blueCanvas, [0, 0, 255]);
+            // Display individual channel previews
+            CONFIG.CHANNELS.forEach((channel, index) => {
+                const qrCanvas = [redQR, greenQR, blueQR][index];
+                displaySingleChannel(qrCanvas, channelCanvases[index], channel.color);
+            });
             
-            // Show channel displays
+            // Show channel container
             channelContainer.style.display = 'flex';
             
-            // Enable download button
-            downloadBtn.disabled = false;
+            // Enable download
+            elements.downloadBtn.disabled = false;
         } catch (error) {
             console.error('Error generating QR code:', error);
-            alert('Failed to generate QR code');
+            showMessage('Failed to generate QR code', true);
         }
     }
 
-    // Function to display a single channel
+    function combineQRCodes(redCanvas, greenCanvas, blueCanvas) {
+        // Get image data from each canvas
+        const canvasContexts = [redCanvas, greenCanvas, blueCanvas].map(c => 
+            c.getContext('2d').getImageData(0, 0, canvasSize, canvasSize)
+        );
+        
+        // Create combined image data
+        const combinedData = ctx.createImageData(canvasSize, canvasSize);
+        
+        for (let i = 0; i < combinedData.data.length; i += 4) {
+            // Extract values from each QR (use red channel as QRs are black/white)
+            combinedData.data[i] = canvasContexts[0].data[i];      // Red channel
+            combinedData.data[i + 1] = canvasContexts[1].data[i];  // Green channel
+            combinedData.data[i + 2] = canvasContexts[2].data[i];  // Blue channel
+            combinedData.data[i + 3] = 255;                        // Alpha
+        }
+        
+        ctx.putImageData(combinedData, 0, 0);
+    }
+
     function displaySingleChannel(qrCanvas, targetCanvas, colorChannel) {
         const ctx = targetCanvas.getContext('2d');
         const smallCanvasSize = targetCanvas.width;
         
-        // Clear the canvas
+        // Clear canvas
         ctx.clearRect(0, 0, smallCanvasSize, smallCanvasSize);
         
-        // Get the QR code data
+        // Get QR data
         const sourceCtx = qrCanvas.getContext('2d');
         const sourceData = sourceCtx.getImageData(0, 0, canvasSize, canvasSize);
         
-        // Create a new image data for the target canvas
+        // Create image data for target
         const targetData = ctx.createImageData(smallCanvasSize, smallCanvasSize);
-        
-        // Scale factor for resizing
         const scale = canvasSize / smallCanvasSize;
         
         for (let y = 0; y < smallCanvasSize; y++) {
             for (let x = 0; x < smallCanvasSize; x++) {
-                // Get corresponding pixel from source (with scaling)
                 const sourceX = Math.floor(x * scale);
                 const sourceY = Math.floor(y * scale);
                 const sourceIndex = (sourceY * canvasSize + sourceX) * 4;
-                
-                // Get target index
                 const targetIndex = (y * smallCanvasSize + x) * 4;
                 
-                // Get luminance (using red channel as QR is black/white)
-                const luminance = sourceData.data[sourceIndex];
-                
-                // Set color channel - white QR parts get the color, black parts remain black
-                targetData.data[targetIndex] = luminance === 255 ? colorChannel[0] : 0;
-                targetData.data[targetIndex + 1] = luminance === 255 ? colorChannel[1] : 0;
-                targetData.data[targetIndex + 2] = luminance === 255 ? colorChannel[2] : 0;
-                targetData.data[targetIndex + 3] = 255; // Alpha
+                // Set color based on QR value (black or white)
+                const isWhite = sourceData.data[sourceIndex] === 255;
+                targetData.data[targetIndex] = isWhite ? colorChannel[0] : 0;
+                targetData.data[targetIndex + 1] = isWhite ? colorChannel[1] : 0;
+                targetData.data[targetIndex + 2] = isWhite ? colorChannel[2] : 0;
+                targetData.data[targetIndex + 3] = 255;
             }
         }
         
-        // Put the image data on the canvas
         ctx.putImageData(targetData, 0, 0);
     }
 
-    function generateQRCode(data) {
-        return new Promise((resolve, reject) => {
-            // Create a temporary canvas to generate the QR code
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            
-            QRCode.toCanvas(tempCanvas, data, { width: canvasSize }, function(error) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(tempCanvas);
-                }
-            });
-        });
-    }
-
-    function combineQRCodes(redCanvas, greenCanvas, blueCanvas) {
-        // Get the image data from each canvas
-        const redCtx = redCanvas.getContext('2d');
-        const greenCtx = greenCanvas.getContext('2d');
-        const blueCtx = blueCanvas.getContext('2d');
-        
-        const redData = redCtx.getImageData(0, 0, canvasSize, canvasSize);
-        const greenData = greenCtx.getImageData(0, 0, canvasSize, canvasSize);
-        const blueData = blueCtx.getImageData(0, 0, canvasSize, canvasSize);
-        
-        // Create new ImageData for the combined image
-        const combinedData = ctx.createImageData(canvasSize, canvasSize);
-        
-        for (let i = 0; i < combinedData.data.length; i += 4) {
-            // Extract grayscale values from each QR code (use red channel for simplicity as QR is black and white)
-            const redValue = redData.data[i];     // 0 for black, 255 for white
-            const greenValue = greenData.data[i]; // 0 for black, 255 for white
-            const blueValue = blueData.data[i];   // 0 for black, 255 for white
-            
-            // Set RGB channels in the combined image
-            // We use the values directly - black QR pixels (0) become 0 in the channel
-            // white QR pixels (255) become 255 (FF) in the channel
-            combinedData.data[i] = redValue;      // Red channel
-            combinedData.data[i + 1] = greenValue;// Green channel
-            combinedData.data[i + 2] = blueValue; // Blue channel
-            combinedData.data[i + 3] = 255;       // Alpha channel (fully opaque)
-        }
-        
-        // Put the combined image data to the canvas
-        ctx.putImageData(combinedData, 0, 0);
-    }
-
     function downloadQR() {
-        const dataURL = combinedCanvas.toDataURL('image/png');
+        const dataURL = elements.combinedCanvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.download = 'color-qr-code.png';
         link.href = dataURL;

@@ -1,39 +1,54 @@
+:root {
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --secondary-color: #f4f4f4;
+    --border-color: #ccc;
+    --text-color: #333;
+    --spacing-sm: 5px;
+    --spacing-md: 10px;
+    --spacing-lg: 20px;
+    --spacing-xl: 30px;
+}
+
+/* Base layout */
 .container { 
     max-width: 800px; 
     margin: 0 auto; 
-    padding: 20px; 
+    padding: var(--spacing-lg); 
 }
 
 .section { 
-    margin-bottom: 30px; 
-    border: 1px solid #ccc; 
-    padding: 20px; 
+    margin-bottom: var(--spacing-xl); 
+    border: 1px solid var(--border-color); 
+    padding: var(--spacing-lg); 
 }
 
+/* QR code display */
 .qr-container { 
     display: flex; 
-    gap: 10px; 
-    margin: 20px 0; 
+    gap: var(--spacing-md); 
+    margin: var(--spacing-lg) 0; 
 }
 
 canvas { 
-    border: 1px solid #ccc; 
+    border: 1px solid var(--border-color); 
 }
 
+/* Form elements */
 input[type="file"] { 
-    margin: 10px 0; 
+    margin: var(--spacing-md) 0; 
 }
 
 button { 
-    padding: 10px 20px; 
-    background: #007bff; 
+    padding: var(--spacing-md) var(--spacing-lg); 
+    background: var(--primary-color); 
     color: white; 
     border: none; 
     cursor: pointer; 
 }
 
 button:hover { 
-    background: #0056b3; 
+    background: var(--primary-hover); 
 }
 
 /* Tabs */
@@ -43,21 +58,21 @@ button:hover {
 
 .tabs {
     display: flex;
-    border-bottom: 2px solid #ccc;
-    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
 }
 
 .tab-btn {
-    padding: 10px 20px;
-    background: #f4f4f4;
-    color: #333;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--secondary-color);
+    color: var(--text-color);
     border: none;
     border-radius: 5px 5px 0 0;
-    margin-right: 5px;
+    margin-right: var(--spacing-sm);
 }
 
 .tab-btn.active {
-    background: #007bff;
+    background: var(--primary-color);
     color: white;
 }
 
@@ -72,24 +87,24 @@ button:hover {
 /* Reader input methods */
 .input-methods {
     display: flex;
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-md);
 }
 
 .method-btn {
     padding: 8px 15px;
     font-size: 14px;
-    background: #f4f4f4;
-    color: #333;
+    background: var(--secondary-color);
+    color: var(--text-color);
 }
 
 .method-btn.active {
-    background: #007bff;
+    background: var(--primary-color);
     color: white;
 }
 
 .input-method {
     display: none;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
 .input-method.active {
@@ -98,12 +113,54 @@ button:hover {
 
 /* Webcam */
 #webcamContainer {
-    margin: 15px 0;
+    margin: var(--spacing-md) 0;
     position: relative;
 }
 
 #webcamVideo {
     width: 100%;
     max-width: 400px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
+}
+
+/* Channel visualization */
+.channel-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--spacing-lg);
+}
+
+.channel-wrapper {
+    display: inline-block;
+    margin: 0 var(--spacing-sm);
+    text-align: center;
+}
+
+.channel-label {
+    text-align: center;
+    margin-top: var(--spacing-sm);
+    font-size: 14px;
+}
+
+/* Results display */
+.decoded-content {
+    margin-top: var(--spacing-md);
+}
+
+.data-box {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    background: var(--secondary-color);
+    margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.channel-result {
+    margin-bottom: var(--spacing-md);
+}
+
+.error {
+    color: red;
+    font-style: italic;
 }
