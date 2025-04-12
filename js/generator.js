@@ -56,9 +56,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Split data into parts for each channel
             const [part1, part2, part3] = splitDataForChannels(data);
             
-            // Generate QR codes for each channel
+            // Generate QR codes for each channel with no border
             const qrPromises = [part1, part2, part3].map(part => 
-                generateQRCode(part, canvasSize)
+                generateQRCode(part, canvasSize, { margin: 0 })  // Add margin: 0 to remove border
             );
             
             const [redQR, greenQR, blueQR] = await Promise.all(qrPromises);
